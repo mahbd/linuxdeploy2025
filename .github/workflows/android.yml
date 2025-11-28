@@ -1,26 +1,49 @@
-name: Android CI
+name: Android CI Build
 
 on:
+  # Triggers the workflow on push events to the 'main' branch
   push:
-    branches: [ "master" ]
-  pull_request:
-    branches: [ "master" ]
+    branches: [ main ]
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
 
 jobs:
   build:
-
+    # Use a high-performance runner optimized for building Android apps (Linux is common and fast)
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
-    - name: set up JDK 17
-      uses: actions/setup-java@v4
-      with:
-        java-version: '17'
-        distribution: 'temurin'
-        cache: gradle
+      - name: Checkout Code
+        # Uses the official action to retrieve your repository code
+        uses: actions/checkout@v4
 
-    - name: Grant execute permission for gradlew
-      run: chmod +x gradlew
-    - name: Build with Gradle
-      run: ./gradlew build
+      - name: Set up JDK 17
+        # Sets up the Java Development Kit required for Gradle/Android
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          # Caches Gradle dependencies and build outputs for faster subsequent builds
+          cache: 'gradle'
+
+      - name: Grant execute permission to gradlew
+        # Ensures the Gradle wrapper script is executable
+        run: chmod +x gradlew
+
+      - name: Run Unit Tests
+        # Executes all local unit tests (optional, but highly recommended)
+        run: ./gradlew test
+
+      - name: Build Debug APK
+        # Runs the Gradle task to build the debug version of the application
+        run: ./gradlew assembleDebug
+
+      - name: Upload Debug APK Artifact
+        # Uploads the generated APK file so you can download it from the GitHub Actions run
+        uses: actions/upload-artifact@v4
+        with:
+          # You may need to adjust the 'path' if your app module is not named 'app'
+          name: debug-apk-build
+          path: app/build/outputs/apk/debug/app-debug.apk
+          # Optional: keep artifact for only 7 days to save storage
+          retention-days: 7
